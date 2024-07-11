@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.cpt.service.coin.CoinMapper">
+
+  <!-- **************************** -->
+  <!-- ******** REFERENCE ********* -->
+  <!-- **************************** -->
+
+  <sql id="limit"> <![CDATA[ LIMIT ${rowPerPage} OFFSET ${offSet} ]]> </sql>
+  <!-- 참조절 삽입시 <include refid="limit"></include> -->
+
+  <!-- 조건절 검색어 추가  -->
+  <!--
+	<if test="approStat != null and approStat != ''"> 
+    <![CDATA[ AND ts.APPRO_STAT = #{approStat} ]]>
+  -->
+  
+  <!--등록된 코인 목록 체크 -->
+  <select id="selectCoinListCnt" parameterType="map" resultType="int">
+  <![CDATA[
+  	SELECT COUNT(*) cnt FROM COIN_INFO_LIST
+  ]]>
+  </select>
+  
+  <!-- 코인목록 입력 -->
+  <insert id="insertCoinList" parameterType="map">
+  <![CDATA[
+  	INSERT INTO COIN_INFO_LIST (
+		COIN_CD, 
+		COIN_NM_KR, 
+		COIN_NM_EN, 
+		EXCHANGE_NM
+		) VALUES 
+  ]]>
+  
+	  <foreach collection="list" item="item" index="idx" separator=",">
+	  <![CDATA[
+	       ( 
+	         #{item.coinCd}, 
+	         #{item.coinNmKr},
+	         #{item.coinNmEn},
+	         #{item.exchange}
+	       )
+	  ]]>
+	  </foreach>
+  </insert>
+  
+  <!-- 검색어 필터 입력 -->
+  <update id="updateFilterText" parameterType="map">
+  <![CDATA[
+ 	UPDATE 
+ 		COIN_INFO_LIST 
+ 	SET 
+ 		FILTER_TXT = #{filterText},
+ 		IS_COLLECTION ='Y'
+ 	WHERE 
+ 		COIN_CD = #{coinCd}
+  ]]>
+  </update>
+  
+  <!-- 1개의 티커에 대한 코인 정보 -->
+   <select id="selectCoinInfo" parameterType="String">
+   <![CDATA[
+   	SELECT 
+		TICKER ticker,
+		NM_KR nmKr,
+		NM_EN nmEn ,
+		KEYWORD_ARR keywordArr,
+		EXCEPT_ARR exceptArr,
+		IS_COLLECTION isCollect,
+		IS_ALARM isAlarm,
+		TELEGRAM_BOT_TOKEN telBotToken,
+		TELEGRAM_CH_CHAT_ID telChId,
+		MY_CHAT_ID myChatId
+	FROM  
+		COIN_INFO_LIST
+	WHERE
+		TICKER = #{ticker}
+   ]]>
+   </select>
+  
+
+<!-- 게시글 번호와 제목을 등록 -->
+<insert id="insertCheckContent" parameterType="map" >
+<![CDATA[
+  	INSERT INTO CPT_CONT_HIST (
+		TICKER, 
+		CONT_NO, 
+		CONT_TITLE) 
+		VALUES (
+			#{ticker}, 
+			#{contNo}, 
+			#{contTitle}
+			)
+]]>
+</insert>
+
+<!-- 한 코인 관련 최근 게시글 번호 가져오기 -->  
+<select id="selectLastContentNo" parameterType="map" resultType="int">
+<![CDATA[
+  SELECT 
+	IFNULL(MAX(CONT_NO), 0) maxNo
+  FROM 
+	CPT_CONT_HIST
+  WHERE 
+	TICKER = #{ticker}
+]]>
+</select>
+
+</mapper>
